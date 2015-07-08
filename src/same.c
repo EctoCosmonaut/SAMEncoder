@@ -1,7 +1,9 @@
-#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #include "same.h"
 #include "strings.h"
@@ -11,8 +13,8 @@
 #define FRAME_MS    ( 1000.0 / S_RATE )
 #define VOLUME      0.75
 #define W_PEAK      ( INT16_MAX * VOLUME )
-#define ONE_FREQ    ( 4 / BIT_MS )
-#define ZERO_FREQ   ( 3 / BIT_MS )
+#define ONE_FREQ    ( ( 2.0 * M_PI * 4.0 ) / BIT_MS )
+#define ZERO_FREQ   ( ( 2.0 * M_PI * 3.0 ) / BIT_MS )
 
 /*** PROTOTYPES ***/
 void genBit( SNDFILE *wav, bool b );
@@ -55,8 +57,6 @@ void generateMsg( const sameMsg_t *msg, SNDFILE *wav )
 		genQuiet( wav, 1000.0 );
 	}
 
-	genQuiet( wav, 1000.0 );
-
 	//TODO: Make EOM signal optional
 	for( i = 0; i < 3; ++i ) {
 		genTail( wav );
@@ -73,16 +73,15 @@ void genBit( SNDFILE *wav, bool b )
 	freq = b ? ONE_FREQ : ZERO_FREQ;
 	for( t = 0.0; t < BIT_MS; t += FRAME_MS ) {
 		frame = (int16_t)( W_PEAK * sin( freq * t ) );
+		sf_writef_short( wav, &frame, 1 );
 	}
-
-	sf_writef_short( wav, &frame, 1 );
 }
 
 void genByte( SNDFILE *wav, uint8_t b )
 {
 	uint8_t i;
 
-	for( i = 0; i < sizeof( b ); ++i ) {
+	for( i = 0; i < sizeof( b ) * 8; ++i ) {
 		genBit( wav, ( b & 1 ) );
 		b >>= 1;
 	}
@@ -105,7 +104,7 @@ void genQuiet( SNDFILE *wav, double ms )
 
     frame = 0;
     for( t = 0.0; t < ms; t += FRAME_MS ) {
-        sf_writef_short( wav, &frame, 1 );
+		sf_writef_short( wav, &frame, 1 );
     }
 }
 
