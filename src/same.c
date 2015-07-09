@@ -45,12 +45,12 @@ void generateMsg( const sameMsg_t *msg, SNDFILE *wav )
 	genQuiet( wav, 1000.0 );
 
 	for( i = 0; i < 3; ++i ) {
+		genPreamble( wav );
 		for( j = 0; j < sizeof( msgTxt ); ++j ) {
 			if( msgTxt[j] == '\0' ) {
 				break;
 			}
 
-			genPreamble( wav );
 			genByte( wav, msgTxt[j] );
 		}
 
